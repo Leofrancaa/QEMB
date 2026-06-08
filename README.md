@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quem é Mais Brabo 🔥
 
-## Getting Started
+Jogo de festa multiplayer (mobile-first / PWA): a cada rodada sorteia-se uma letra,
+cada jogador escreve **3 famosos brabos** com aquela letra, revela **1** deles (sem
+repetir o que já foi revelado) e todos votam em **quem é o mais brabo**. Quem leva mais
+votos pontua. Tem modificadores aleatórios pra zoeira ("não vale jogador de futebol",
+"só vale mulher", "rodada dobrada", etc.).
 
-First, run the development server:
+- **3 a 10 jogadores** por sala • host escolhe até **10 rodadas**
+- Tempo real via **Supabase Realtime** • placar persistido com **Drizzle + Postgres**
+- **Next.js + TypeScript + Tailwind v4 + Framer Motion** • deploy no **Vercel**
 
+## Como funciona uma rodada
+
+1. **Sorteio** da letra (caça-níquel) + carta de modificador.
+2. **Escrita (30s):** cada um digita 3 nomes válidos (precisam começar com a letra —
+   o input fica vermelho se não começar). Ao terminar, aperta **"Acabei!"** e entra na fila.
+3. **Revelação (em ordem de quem terminou):** cada jogador revela 1 dos seus 3 nomes,
+   sem repetir nomes já revelados. Dá pra **contestar** nomes suspeitos (💀).
+4. **Votação:** todos votam no mais brabo (não pode votar em si mesmo).
+5. **Resultado:** quem teve mais votos ganha ponto(s). Empate pontua todos no topo.
+
+## Setup
+
+### 1. Dependências
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Supabase
+1. Crie um projeto em [supabase.com](https://supabase.com).
+2. Copie `.env.example` para `.env.local` e preencha:
+   - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Settings → API)
+   - `DATABASE_URL` (Settings → Database → Connection string → **pooler**, porta 6543)
+3. Crie as tabelas (uma das opções):
+   - `npm run db:push` (aplica o schema direto), **ou**
+   - cole o conteúdo de `drizzle/0000_init.sql` no **SQL Editor** do Supabase.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> O Realtime (broadcast/presence) não exige nenhuma configuração extra de tabelas.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Rodar local
+```bash
+npm run dev
+```
+Abra http://localhost:3000 em 3 abas/dispositivos pra testar uma partida.
 
-## Learn More
+> Em dev o service worker (PWA) fica desativado. Para testar o PWA, use `npm run build && npm start`.
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy (Vercel)
+1. Importe o repositório na Vercel.
+2. Configure as 3 variáveis de ambiente (`NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `DATABASE_URL`).
+3. Deploy. O build roda `next build --webpack` (necessário para o Serwist/PWA).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
+| Script | O que faz |
+|---|---|
+| `npm run dev` | Dev server (Turbopack, SW desativado) |
+| `npm run build` | Build de produção (webpack + service worker) |
+| `npm run db:push` | Aplica o schema Drizzle no Postgres |
+| `npm run db:studio` | Abre o Drizzle Studio |
+| `npm run icons` | Regenera os ícones do PWA a partir dos SVGs em `scripts/` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Logo
+A logo provisória é vetorial (`scripts/icon.svg`). Veja **`LOGO_PROMPT.md`** para um prompt
+pronto de gerar uma logo oficial numa IA de imagem.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack / Arquitetura
+- **Host-autoritativo:** o client do host controla a máquina de estados e dispara as
+  transições por tempo (ex.: fim dos 30s). Toda ação grava no Postgres via *server
+  actions* e o novo estado é propagado por **broadcast**; os clients aplicam o snapshot.
+- Reconexão: ao reabrir, o estado é relido do banco (`getRoomState`).
+- Identidade sem login: um `clientId` por navegador (localStorage).

@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Paleta viva e descontraída */
+  --color-grape: #7c3aed;
+  --color-grape-deep: #5b21b6;
+  --color-magenta: #ec4899;
+  --color-tangerine: #fb7185;
+  --color-sunny: #fde047;
+  --color-lime: #a3e635;
+  --color-cyan: #22d3ee;
+  --color-ink: #1e0b3b;
+  --color-ink-soft: #2d1457;
+
+  --font-display: var(--font-display), "Bangers", system-ui, sans-serif;
+  --font-sans: var(--font-body), system-ui, sans-serif;
+
+  --animate-pop: pop 0.25s ease-out;
+  --animate-wiggle: wiggle 0.5s ease-in-out infinite;
+  --animate-float-up: float-up 2.2s ease-out forwards;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@keyframes float-up {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-220px) scale(1.6); opacity: 0; }
+}
+
+html, body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(236, 72, 153, 0.35), transparent 60%),
+    radial-gradient(1000px 500px at 90% 10%, rgba(34, 211, 238, 0.25), transparent 55%),
+    radial-gradient(900px 700px at 50% 110%, rgba(163, 230, 53, 0.18), transparent 55%),
+    linear-gradient(160deg, #2d1457 0%, #1e0b3b 60%, #170a30 100%);
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* tira zoom em input no iOS e dá cara de app */
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+/* esconde scrollbar feia mantendo scroll */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+
+.text-stroke {
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.35);
+  paint-order: stroke fill;
 }
